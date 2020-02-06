@@ -1,1 +1,183 @@
-H
+<html>
+    <head>
+        <title>MailerLite Add Subscriber Form</title>
+
+        <link rel="stylesheet" href="https://unpkg.com/bootstrap@4.3.1/dist/css/bootstrap.min.css">
+
+        <script src="https://unpkg.com/vue"></script>
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    </head>
+
+    <body class="bg-light">
+        <div class="container">
+            <div class="row justify-content-center pb-5">
+                <div class="col-md-4">
+                    <img class="img-fluid" src="https://www.mailerlite.com/site/themes/new/img/mailerlite.png" />
+                </div>
+            </div>
+
+            <div class="row" id="app">
+                <div class="col-md-8">
+                    <h4 class="mb-3">Add a new subscriber</h4>
+
+                    <form method="post" @submit="formPost">
+                        <div class="alert" 
+                             role="alert" 
+                             :class="{ 'alert-danger': formMessageType == 'danger', 'alert-success': formMessageType == 'success' }"
+                             v-if="formMessages.length">
+                            <ul class="my-0">
+                                <li v-for="formMessage in formMessages">{{ formMessage }}</li>
+                            </ul>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="fiName">Name</label>
+                                <input class="form-control" 
+                                       id="fiName" 
+                                       type="text" 
+                                       placeholder="your name" 
+                                       value="" 
+                                       required
+                                       v-model="sName">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email">Email</label>
+                                <input class="form-control" 
+                                       id="email" 
+                                       type="email" 
+                                       placeholder="you@example.com" 
+                                       required
+                                       v-model="sEmail">
+                            </div>
+                        </div>
+
+                        <div class="row" v-if="false">
+                            <div class="col-md-6 mb-3">
+                                <label for="fiState">State</label>
+                                <select class="custom-select d-block w-100" id="fiState" required>
+                                    <option value="">Choose...</option>
+                                    <option>Active</option>
+                                    <option>Bounced</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <hr class="mb-4">
+
+                        <div class="row">
+                            <template v-for="(formField, index) in formFields">
+                                <div class="col-md-6 mb-3">
+                                    <label 
+                                        :for="`fi${formField.keyword}`"
+                                        :key="`lbl-${formField.keyword}`"
+                                        >
+                                        {{ formField.title }}
+                                    </label>
+                                    <input class="form-control" 
+                                           placeholder="" 
+                                           value=""
+                                           v-model="formFieldData[formField.keyword]"
+                                           :type="formField.datatype"
+                                           :id="`fi${formField.keyword}`" 
+                                           :name="`fi${formField.keyword}`">
+                                </div>
+                            </template>
+                        </div>
+
+                        <hr class="mb-4">
+
+                        <button class="btn btn-primary btn-lg btn-block" type="submit">Save</button>
+                    </form>
+                </div>
+
+                <div class="col-md-4">
+                    <h4 class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">Subscribers</span>
+                        <span class="badge badge-secondary badge-pill">{{ subscriberCount }}</span>
+                    </h4>
+
+                    <div class="list-group mb-3">
+                        <div class="list-group-item" v-for="subscriber in subscribers">
+                            <div>
+                                <h6 class="my-0">
+                                    {{ subscriber.name }}
+                                    <span class="badge badge-primary badge-pill float-right">{{ subscriber.state_label }}</span>
+                                </h6>
+                                <small class="text-muted">{{ subscriber.email }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </body>
+
+    <script>
+new Vue({
+    el: "#app",
+    data: {
+        sName: "",
+        sEmail: "",
+        formFieldData: {},
+        formMessages: [],
+        formMessageType: "danger",
+        subscribers: [],
+        subscriberCount: 0,
+        formFields: [],
+    },
+    mounted() {
+        this.getSubscribers();
+
+        this.getFields();
+    },
+    methods: {
+        getSubscribers: function () {
+            axios.get("/api.php?type=subscribers")
+                    .then(response => {
+                        this.subscribers = response.data.data
+                        this.subscriberCount = response.data.total
+                    });
+        },
+        getFields: function () {
+            axios.get("/api.php?type=fields")
+                    .then(response => {
+                        this.formFields = response.data.data
+                    })
+        },
+        formPost: function (e) {
+            this.formMessages = [];
+
+            if (!this.sName) {
+                this.formMessages.push("Name is required");
+            }
+
+            if (!this.sEmail) {
+                this.formMessages.push("Email is required");
+            }
+
+            // no errors
+            if (this.formMessages.length == 0) {
+                axios.post("/api.php?type=subscriber-add", {
+                    email: this.sEmail,
+                    name: this.sName,
+                    fields: this.formFieldData
+                }).then(response => {
+                    if (response.data.error === 0) {
+                        this.formMessageType = "success";
+                        this.getSubscribers();
+                    }
+
+                    this.formMessages.push(response.data.message);
+                }).catch(error => {
+                    this.formMessages.push(response.data.error);
+                });
+            }
+
+            e.preventDefault();
+        }
+    }
+});
+    </script>
+</html>

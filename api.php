@@ -38,13 +38,15 @@ switch ($requestType) {
         
     case "subscriber-add":
         
+        $inputData = json_decode(file_get_contents("php://input"), 1);
+        
         $subscriber = new Subscriber;
-        $response = $subscriber->add([]);
+        $response = $subscriber->add($inputData);
+        
         exit(json_encode($response));
 
         break;
 
-    
 }
 
 exit(json_encode(array(

@@ -7,11 +7,19 @@ define("DB_NAME", "db");
 define("DB_USER", "root");
 define("DB_PASSW", "password");
 
-define("ACT", "active");
-define("UNS", "unsubscribed");
-define("BOU", "bounced");
-define("JUN", "junk");
-define("UNC", "unconfirmed");
+define("FIELD_DATATYPES", array(
+    1 => "text"
+));
+
+define("SUBSCRIBER_STATES", array(
+    "ACT" => "Active",
+    "UNS" => "Unsubscribed",
+    "BOU" => "Bounced",
+    "JUN" => "Junk",
+    "UNC" => "Unconfirmed",
+));
+
+define("SUBSCRIBER_DEFAULT_STATE", "ACT");
 
 define("FIELD_TYPES", array(
     1 => "TEXT",

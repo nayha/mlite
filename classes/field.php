@@ -20,8 +20,15 @@ class Field {
     public function getAll() {
         $records = $this->db->select($this->table_name, "*");
 
+        $recordCount = count($records);
+        
+        $fieldDataTypes = FIELD_DATATYPES;
+        for ($x=0; $x<$recordCount; $x++) {
+            $records[$x]["datatype"] = $fieldDataTypes[$records[$x]["type"]];
+        }
+        
         $data = array(
-            "total" => count($records),
+            "total" => $recordCount,
             "data" => $records
         );
 
