@@ -4,6 +4,11 @@
 
         <link rel="stylesheet" href="https://unpkg.com/bootstrap@4.3.1/dist/css/bootstrap.min.css">
 
+        <style>
+            form { position: relative; }
+            .form-overlay { display: flex; position: absolute; background-color: rgba(255, 255, 255, 0.4); top: 0; right: 0; bottom: 0; left: 0; }
+        </style>
+
         <script src="https://unpkg.com/vue"></script>
         <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     </head>
@@ -88,6 +93,31 @@
                         <hr class="mb-4">
 
                         <button class="btn btn-primary btn-lg btn-block" type="submit">Save</button>
+
+                        <div class="form-overlay" :class="{ 'd-none': !showFormOverlay }">
+                            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="margin:auto;background:transparent;display:block;" width="94px" height="94px" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid">
+                            <circle cx="84" cy="50" r="1.83004" fill="#05c267">
+                            <animate attributeName="r" repeatCount="indefinite" dur="0.25s" calcMode="spline" keyTimes="0;1" values="5;0" keySplines="0 0.5 0.5 1" begin="0s"></animate>
+                            <animate attributeName="fill" repeatCount="indefinite" dur="1s" calcMode="discrete" keyTimes="0;0.25;0.5;0.75;1" values="#05c267;#05c267;#05c267;#05c267;#05c267" begin="0s"></animate>
+                            </circle>
+                            <circle cx="16" cy="50" r="3.16996" fill="#05c267">
+                            <animate attributeName="r" repeatCount="indefinite" dur="1s" calcMode="spline" keyTimes="0;0.25;0.5;0.75;1" values="0;0;5;5;5" keySplines="0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1" begin="0s"></animate>
+                            <animate attributeName="cx" repeatCount="indefinite" dur="1s" calcMode="spline" keyTimes="0;0.25;0.5;0.75;1" values="16;16;16;50;84" keySplines="0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1" begin="0s"></animate>
+                            </circle>
+                            <circle cx="37.5557" cy="50" r="5" fill="#05c267">
+                            <animate attributeName="r" repeatCount="indefinite" dur="1s" calcMode="spline" keyTimes="0;0.25;0.5;0.75;1" values="0;0;5;5;5" keySplines="0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1" begin="-0.25s"></animate>
+                            <animate attributeName="cx" repeatCount="indefinite" dur="1s" calcMode="spline" keyTimes="0;0.25;0.5;0.75;1" values="16;16;16;50;84" keySplines="0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1" begin="-0.25s"></animate>
+                            </circle>
+                            <circle cx="71.5557" cy="50" r="5" fill="#05c267">
+                            <animate attributeName="r" repeatCount="indefinite" dur="1s" calcMode="spline" keyTimes="0;0.25;0.5;0.75;1" values="0;0;5;5;5" keySplines="0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1" begin="-0.5s"></animate>
+                            <animate attributeName="cx" repeatCount="indefinite" dur="1s" calcMode="spline" keyTimes="0;0.25;0.5;0.75;1" values="16;16;16;50;84" keySplines="0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1" begin="-0.5s"></animate>
+                            </circle>
+                            <circle cx="16" cy="50" r="0" fill="#05c267">
+                            <animate attributeName="r" repeatCount="indefinite" dur="1s" calcMode="spline" keyTimes="0;0.25;0.5;0.75;1" values="0;0;5;5;5" keySplines="0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1" begin="-0.75s"></animate>
+                            <animate attributeName="cx" repeatCount="indefinite" dur="1s" calcMode="spline" keyTimes="0;0.25;0.5;0.75;1" values="16;16;16;50;84" keySplines="0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1" begin="-0.75s"></animate>
+                            </circle>
+                            </svg>
+                        </div>
                     </form>
                 </div>
 
@@ -121,11 +151,12 @@ new Vue({
         sName: "",
         sEmail: "",
         formFieldData: {},
-        formMessages: [],
-        formMessageType: "danger",
+        formMessages: [], // all alert messages will go here
+        formMessageType: "danger", // alert message type (danger or success)
         subscribers: [],
         subscriberCount: 0,
         formFields: [],
+        showFormOverlay: false
     },
     mounted() {
         this.getSubscribers();
@@ -147,8 +178,11 @@ new Vue({
                     })
         },
         formPost: function (e) {
+            this.showFormOverlay = true;
             this.formMessages = [];
 
+            e.preventDefault();
+            
             if (!this.sName) {
                 this.formMessages.push("Name is required");
             }
@@ -170,12 +204,15 @@ new Vue({
                     }
 
                     this.formMessages.push(response.data.message);
+                    this.showFormOverlay = false;
                 }).catch(error => {
-                    this.formMessages.push(response.data.error);
+                    this.formMessages.push(error);
+                    this.showFormOverlay = false;
                 });
+            } else {
+                this.showFormOverlay = false;
             }
 
-            e.preventDefault();
         }
     }
 });
