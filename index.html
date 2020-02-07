@@ -7,6 +7,9 @@
         <style>
             form { position: relative; }
             .form-overlay { display: flex; position: absolute; background-color: rgba(255, 255, 255, 0.4); top: 0; right: 0; bottom: 0; left: 0; }
+            .subscriber-list { max-height: 450px; overflow-y: scroll; }
+            [v-cloak] > * { display: none; }
+            [v-cloak]::before { content: "loading..." }
         </style>
 
         <script src="https://unpkg.com/vue"></script>
@@ -21,7 +24,7 @@
                 </div>
             </div>
 
-            <div class="row" id="app">
+            <div class="row" id="app" v-cloak>
                 <div class="col-md-8">
                     <h4 class="mb-3">Add a new subscriber</h4>
 
@@ -127,7 +130,7 @@
                         <span class="badge badge-secondary badge-pill">{{ subscriberCount }}</span>
                     </h4>
 
-                    <div class="list-group mb-3">
+                    <div class="list-group mb-3 subscriber-list">
                         <div class="list-group-item" v-for="subscriber in subscribers">
                             <div>
                                 <h6 class="my-0">
@@ -142,79 +145,90 @@
 
             </div>
         </div>
+        
+        <script>
+    new Vue({
+        el: "#app",
+        data: {
+            sName: "",
+            sEmail: "",
+            formFieldData: {},
+            formMessages: [], // all alert messages will go here
+            formMessageType: "danger", // alert message type (danger or success)
+            subscribers: [],
+            subscriberCount: 0,
+            formFields: [],
+            showFormOverlay: false
+        },
+        mounted() {
+            this.getSubscribers();
+
+            this.getFields();
+        },
+        methods: {
+            getSubscribers: function () {
+                axios.get("/api.php?type=subscribers")
+                        .then(response => {
+                            this.subscribers = response.data.data.reverse();
+                            this.subscriberCount = response.data.total;
+                        });
+            },
+            getFields: function () {
+                axios.get("/api.php?type=fields")
+                        .then(response => {
+                            this.formFields = response.data.data;
+                        })
+            },
+            clearFormFields: function() {
+                this.sName = "";
+                this.sEmail = "";
+                for (var formField in this.formFieldData) {
+                    if (this.formFieldData.hasOwnProperty(formField)) {
+                        this.formFieldData[formField] = "";
+                    }
+                }
+            },
+            formPost: function (e) {
+                this.showFormOverlay = true;
+                this.formMessages = [];
+
+                e.preventDefault();
+            
+                if (!this.sName) {
+                    this.formMessages.push("Name is required");
+                }
+
+                if (!this.sEmail) {
+                    this.formMessages.push("Email is required");
+                }
+
+                // no errors
+                if (this.formMessages.length == 0) {
+                    axios.post("/api.php?type=subscriber-add", {
+                        email: this.sEmail,
+                        name: this.sName,
+                        fields: this.formFieldData
+                    }).then(response => {
+                        if (response.data.error === 0) {
+                            this.formMessageType = "success";
+                            this.getSubscribers();
+                            this.clearFormFields();
+                        }
+
+                        this.formMessages.push(response.data.message);
+                        this.showFormOverlay = false;
+                    }).catch(error => {
+                        this.formMessages.push(error);
+                        this.showFormOverlay = false;
+                    });
+                } else {
+                    this.showFormOverlay = false;
+                }
+
+            }
+        }
+    });
+        </script>
     </body>
 
-    <script>
-new Vue({
-    el: "#app",
-    data: {
-        sName: "",
-        sEmail: "",
-        formFieldData: {},
-        formMessages: [], // all alert messages will go here
-        formMessageType: "danger", // alert message type (danger or success)
-        subscribers: [],
-        subscriberCount: 0,
-        formFields: [],
-        showFormOverlay: false
-    },
-    mounted() {
-        this.getSubscribers();
-
-        this.getFields();
-    },
-    methods: {
-        getSubscribers: function () {
-            axios.get("/api.php?type=subscribers")
-                    .then(response => {
-                        this.subscribers = response.data.data
-                        this.subscriberCount = response.data.total
-                    });
-        },
-        getFields: function () {
-            axios.get("/api.php?type=fields")
-                    .then(response => {
-                        this.formFields = response.data.data
-                    })
-        },
-        formPost: function (e) {
-            this.showFormOverlay = true;
-            this.formMessages = [];
-
-            e.preventDefault();
-            
-            if (!this.sName) {
-                this.formMessages.push("Name is required");
-            }
-
-            if (!this.sEmail) {
-                this.formMessages.push("Email is required");
-            }
-
-            // no errors
-            if (this.formMessages.length == 0) {
-                axios.post("/api.php?type=subscriber-add", {
-                    email: this.sEmail,
-                    name: this.sName,
-                    fields: this.formFieldData
-                }).then(response => {
-                    if (response.data.error === 0) {
-                        this.formMessageType = "success";
-                        this.getSubscribers();
-                    }
-
-                    this.formMessages.push(response.data.message);
-                    this.showFormOverlay = false;
-                }).catch(error => {
-                    this.formMessages.push(error);
-                    this.showFormOverlay = false;
-                });
-            } else {
-                this.showFormOverlay = false;
-            }
-
-        }
-    }
-});
-    </script>
 </html>
